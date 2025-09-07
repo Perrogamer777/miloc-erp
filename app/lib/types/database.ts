@@ -9,171 +9,201 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
-      // Tabla de cotizaciones
+      empresas: {
+        Row: {
+          id: string
+          rut: string
+          nombre: string
+          contacto_principal: string | null
+          email: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          rut: string
+          nombre: string
+          contacto_principal?: string | null
+          email?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          rut?: string
+          nombre?: string
+          contacto_principal?: string | null
+          email?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
       cotizaciones: {
         Row: {
           id: string
           numero_cotizacion: string
-          nombre_cliente: string
-          email_cliente: string | null
-          telefono_cliente: string | null
+          empresa_id: string | null
+          descripcion: string
           monto_total: number
-          moneda: string
-          estado: 'borrador' | 'enviada' | 'aceptada' | 'rechazada' | 'vencida'
-          fecha_emision: string
-          fecha_vencimiento: string | null
-          url_pdf: string | null
-          notas: string | null
-          creado_en: string
-          actualizado_en: string
+          fecha_envio: string
+          estado: 'enviada' | 'aceptada' | 'rechazada'
+          created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
           numero_cotizacion: string
-          nombre_cliente: string
-          email_cliente?: string | null
-          telefono_cliente?: string | null
+          empresa_id?: string | null
+          descripcion: string
           monto_total: number
-          moneda?: string
-          estado?: 'borrador' | 'enviada' | 'aceptada' | 'rechazada' | 'vencida'
-          fecha_emision: string
-          fecha_vencimiento?: string | null
-          url_pdf?: string | null
-          notas?: string | null
-          creado_en?: string
-          actualizado_en?: string
+          fecha_envio?: string
+          estado?: 'enviada' | 'aceptada' | 'rechazada'
+          created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
           numero_cotizacion?: string
-          nombre_cliente?: string
-          email_cliente?: string | null
-          telefono_cliente?: string | null
+          empresa_id?: string | null
+          descripcion?: string
           monto_total?: number
-          moneda?: string
-          estado?: 'borrador' | 'enviada' | 'aceptada' | 'rechazada' | 'vencida'
-          fecha_emision?: string
-          fecha_vencimiento?: string | null
-          url_pdf?: string | null
-          notas?: string | null
-          creado_en?: string
-          actualizado_en?: string
+          fecha_envio?: string
+          estado?: 'enviada' | 'aceptada' | 'rechazada'
+          created_at?: string
+          updated_at?: string
         }
       }
-      // Tabla de órdenes de compra
       ordenes_compra: {
         Row: {
           id: string
           numero_orden: string
-          cotizacion_id: string
-          nombre_proveedor: string
-          email_proveedor: string | null
-          telefono_proveedor: string | null
+          cotizacion_id: string | null
+          empresa_rut: string
+          empresa_nombre: string
+          fecha_recepcion: string
+          fecha_entrega: string | null
+          descripcion_trabajo: string
+          monto_neto: number
+          iva: number
           monto_total: number
-          moneda: string
-          estado: 'pendiente' | 'aprobada' | 'enviada' | 'entregada' | 'cancelada'
-          fecha_orden: string
-          fecha_entrega_esperada: string | null
-          url_pdf: string | null
-          notas: string | null
-          creado_en: string
-          actualizado_en: string
+          estado: 'recibida' | 'en_proceso' | 'completada' | 'facturada'
+          archivo_pdf_url: string | null
+          observaciones: string | null
+          created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
           numero_orden: string
-          cotizacion_id: string
-          nombre_proveedor: string
-          email_proveedor?: string | null
-          telefono_proveedor?: string | null
+          cotizacion_id?: string | null
+          empresa_rut: string
+          empresa_nombre: string
+          fecha_recepcion?: string
+          fecha_entrega?: string | null
+          descripcion_trabajo: string
+          monto_neto: number
+          iva?: number
           monto_total: number
-          moneda?: string
-          estado?: 'pendiente' | 'aprobada' | 'enviada' | 'entregada' | 'cancelada'
-          fecha_orden: string
-          fecha_entrega_esperada?: string | null
-          url_pdf?: string | null
-          notas?: string | null
-          creado_en?: string
-          actualizado_en?: string
+          estado?: 'recibida' | 'en_proceso' | 'completada' | 'facturada'
+          archivo_pdf_url?: string | null
+          observaciones?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
           numero_orden?: string
-          cotizacion_id?: string
-          nombre_proveedor?: string
-          email_proveedor?: string | null
-          telefono_proveedor?: string | null
+          cotizacion_id?: string | null
+          empresa_rut?: string
+          empresa_nombre?: string
+          fecha_recepcion?: string
+          fecha_entrega?: string | null
+          descripcion_trabajo?: string
+          monto_neto?: number
+          iva?: number
           monto_total?: number
-          moneda?: string
-          estado?: 'pendiente' | 'aprobada' | 'enviada' | 'entregada' | 'cancelada'
-          fecha_orden?: string
-          fecha_entrega_esperada?: string | null
-          url_pdf?: string | null
-          notas?: string | null
-          creado_en?: string
-          actualizado_en?: string
+          estado?: 'recibida' | 'en_proceso' | 'completada' | 'facturada'
+          archivo_pdf_url?: string | null
+          observaciones?: string | null
+          created_at?: string
+          updated_at?: string
         }
       }
-      // Tabla de facturas
       facturas: {
         Row: {
           id: string
           numero_factura: string
-          orden_compra_id: string
-          nombre_vendedor: string
-          email_vendedor: string | null
-          telefono_vendedor: string | null
-          monto_total: number
-          moneda: string
-          estado: 'pendiente' | 'pagada' | 'vencida' | 'cancelada'
-          fecha_factura: string
-          fecha_vencimiento: string
+          orden_compra_id: string | null
+          tipo_documento: 'factura_electronica' | 'boleta' | 'nota_credito' | 'nota_debito'
+          timbre_electronico: string | null
+          folio_sii: string | null
+          empresa_rut: string
+          empresa_nombre: string
+          fecha_emision: string
           fecha_pago: string | null
-          url_pdf: string | null
-          notas: string | null
-          creado_en: string
-          actualizado_en: string
+          descripcion_trabajo: string
+          monto_neto: number
+          iva: number
+          monto_total: number
+          estado_pago: 'pendiente' | 'pagada' | 'anulada'
+          archivo_pdf_url: string | null
+          observaciones: string | null
+          created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
           numero_factura: string
-          orden_compra_id: string
-          nombre_vendedor: string
-          email_vendedor?: string | null
-          telefono_vendedor?: string | null
-          monto_total: number
-          moneda?: string
-          estado?: 'pendiente' | 'pagada' | 'vencida' | 'cancelada'
-          fecha_factura: string
-          fecha_vencimiento: string
+          orden_compra_id?: string | null
+          tipo_documento?: 'factura_electronica' | 'boleta' | 'nota_credito' | 'nota_debito'
+          timbre_electronico?: string | null
+          folio_sii?: string | null
+          empresa_rut: string
+          empresa_nombre: string
+          fecha_emision?: string
           fecha_pago?: string | null
-          url_pdf?: string | null
-          notas?: string | null
-          creado_en?: string
-          actualizado_en?: string
+          descripcion_trabajo: string
+          monto_neto: number
+          iva?: number
+          monto_total: number
+          estado_pago?: 'pendiente' | 'pagada' | 'anulada'
+          archivo_pdf_url?: string | null
+          observaciones?: string | null
+          created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
           numero_factura?: string
-          orden_compra_id?: string
-          nombre_vendedor?: string
-          email_vendedor?: string | null
-          telefono_vendedor?: string | null
-          monto_total?: number
-          moneda?: string
-          estado?: 'pendiente' | 'pagada' | 'vencida' | 'cancelada'
-          fecha_factura?: string
-          fecha_vencimiento?: string
+          orden_compra_id?: string | null
+          tipo_documento?: 'factura_electronica' | 'boleta' | 'nota_credito' | 'nota_debito'
+          timbre_electronico?: string | null
+          folio_sii?: string | null
+          empresa_rut?: string
+          empresa_nombre?: string
+          fecha_emision?: string
           fecha_pago?: string | null
-          url_pdf?: string | null
-          notas?: string | null
-          creado_en?: string
-          actualizado_en?: string
+          descripcion_trabajo?: string
+          monto_neto?: number
+          iva?: number
+          monto_total?: number
+          estado_pago?: 'pendiente' | 'pagada' | 'anulada'
+          archivo_pdf_url?: string | null
+          observaciones?: string | null
+          created_at?: string
+          updated_at?: string
         }
       }
     }
     Views: {
-      [_ in never]: never
+      dashboard_metricas: {
+        Row: {
+          facturas_pendientes: number
+          monto_pendiente_pago: number
+          cotizaciones_enviadas: number
+          ordenes_compra_recibidas: number
+        }
+      }
     }
     Functions: {
       [_ in never]: never

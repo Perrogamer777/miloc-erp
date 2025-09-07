@@ -9,10 +9,10 @@ import OrdenesCompraTable from './tables/OrdenesCompraTable'
 
 export default function Dashboard() {
   const [stats, setStats] = useState({
-    totalOrdenes: 0,
-    totalFacturas: 0,
-    montoPendiente: 0,
-    facturasVencidas: 0
+    facturasPendientes: 0,
+    montoPendientePago: 0,
+    cotizacionesEnviadas: 0,
+    ordenesCompraRecibidas: 0
   })
   
   const [loading, setLoading] = useState(true)
@@ -23,16 +23,12 @@ export default function Dashboard() {
   
   const loadStats = async () => {
     try {
-      const [ordenes, resumenFacturas] = await Promise.all([
-        OrdenesCompraRepository.obtenerTodas(),
-        FacturasService.obtenerResumenPendientes()
-      ])
-      
+      // Por ahora usaremos datos estáticos hasta implementar la nueva estructura
       setStats({
-        totalOrdenes: ordenes.length,
-        totalFacturas: resumenFacturas.total_facturas,
-        montoPendiente: resumenFacturas.monto_total,
-        facturasVencidas: resumenFacturas.facturas_vencidas
+        facturasPendientes: 12,
+        montoPendientePago: 45850000,
+        cotizacionesEnviadas: 8,
+        ordenesCompraRecibidas: 15
       })
     } catch (error) {
       console.error('Error loading stats:', error)
@@ -69,20 +65,8 @@ export default function Dashboard() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
-          title="Total Órdenes"
-          value={stats.totalOrdenes}
-          icon={
-            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
-              <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
-            </svg>
-          }
-          color="blue"
-        />
-        
-        <StatCard
-          title="Facturas Activas"
-          value={stats.totalFacturas}
+          title="Facturas Pendientes de Pago"
+          value={stats.facturasPendientes}
           icon={
             <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -91,12 +75,12 @@ export default function Dashboard() {
               <line x1="16" y1="17" x2="8" y2="17"/>
             </svg>
           }
-          color="green"
+          color="red"
         />
         
         <StatCard
-          title="Monto Pendiente"
-          value={formatCurrency(stats.montoPendiente)}
+          title="Monto Pendiente de Pago"
+          value={formatCurrency(stats.montoPendientePago)}
           icon={
             <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="12" y1="1" x2="12" y2="23"/>
@@ -107,15 +91,29 @@ export default function Dashboard() {
         />
         
         <StatCard
-          title="Facturas Vencidas"
-          value={stats.facturasVencidas}
+          title="Cotizaciones Enviadas"
+          value={stats.cotizacionesEnviadas}
           icon={
             <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10"/>
-              <polyline points="12,6 12,12 16,14"/>
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              <line x1="9" y1="9" x2="15" y2="9"/>
+              <line x1="9" y1="13" x2="12" y2="13"/>
             </svg>
           }
-          color={stats.facturasVencidas > 0 ? "red" : "green"}
+          color="blue"
+        />
+        
+        <StatCard
+          title="Órdenes de Compra Recibidas"
+          value={stats.ordenesCompraRecibidas}
+          icon={
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+              <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+              <path d="m9 12 2 2 4-4"/>
+            </svg>
+          }
+          color="green"
         />
       </div>
       
