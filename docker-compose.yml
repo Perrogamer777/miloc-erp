@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  # Aplicación Next.js
+  miloc-erp:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - .env.local
+    depends_on:
+      - postgres
+    networks:
+      - miloc-network
+
+  # PostgreSQL local (opcional - usar solo para desarrollo local)
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: miloc_erp
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - miloc-network
+
+  # pgAdmin para administrar la base de datos
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@miloc.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres
+    networks:
+      - miloc-network
+
+volumes:
+  postgres_data:
+
+networks:
+  miloc-network:
+    driver: bridge
