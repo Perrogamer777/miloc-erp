@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { OrdenesCompraService } from '../../services/ordenes-compra.service'
 import { CrearOrdenCompraInput } from '../../lib/validations/schemas'
+import { DatosExtraidos } from '../../lib/services/ocr.service'
 import Button from '../ui/Button'
 import Input from '../ui/Input'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
@@ -10,9 +11,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 interface OrdenCompraFormProps {
   onSuccess?: (orden: any) => void
   onCancel?: () => void
+  datosIniciales?: DatosExtraidos | null
 }
 
-export default function OrdenCompraForm({ onSuccess, onCancel }: OrdenCompraFormProps) {
+export default function OrdenCompraForm({ onSuccess, onCancel, datosIniciales }: OrdenCompraFormProps) {
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   
@@ -28,6 +30,22 @@ export default function OrdenCompraForm({ onSuccess, onCancel }: OrdenCompraForm
     fecha_entrega_esperada: '',
     notas: ''
   })
+
+  // Efecto para cargar datos extraídos del PDF
+  useEffect(() => {
+    if (datosIniciales) {
+      setFormData(prev => ({
+        ...prev,
+        numero_orden: datosIniciales.numeroDocumento || '',
+        nombre_proveedor: datosIniciales.nombreEmpresa || '',
+        monto_total: datosIniciales.montoTotal || 0,
+        fecha_orden: datosIniciales.fecha || new Date().toISOString().split('T')[0],
+        notas: `📄 Datos extraídos automáticamente del PDF\n${datosIniciales.rut ? `RUT: ${datosIniciales.rut}\n` : ''}${datosIniciales.montoNeto ? `Monto Neto: $${datosIniciales.montoNeto.toLocaleString('es-CL')}\n` : ''}${datosIniciales.iva ? `IVA: $${datosIniciales.iva.toLocaleString('es-CL')}\n` : ''}`
+      }))
+      // Limpiar errores previos
+      setErrors({})
+    }
+  }, [datosIniciales])
   
   const handleInputChange = (field: keyof CrearOrdenCompraInput, value: string | number) => {
     setFormData(prev => ({

@@ -23,7 +23,6 @@ export default function Dashboard() {
   
   const loadStats = async () => {
     try {
-      // Por ahora usaremos datos estáticos hasta implementar la nueva estructura
       setStats({
         facturasPendientes: 12,
         montoPendientePago: 45850000,
@@ -59,7 +58,7 @@ export default function Dashboard() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Dashboard</h1>
-        <p className="text-gray-600">Resumen general de tu sistema de gestión</p>
+        <p className="text-gray-600">Resumen general</p>
       </div>
       
       {/* Stats Cards */}
