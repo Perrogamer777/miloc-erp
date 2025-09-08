@@ -7,20 +7,14 @@ import OrdenesCompraTable from "./components/tables/OrdenesCompraTable"
 import OrdenCompraForm from "./components/forms/OrdenCompraForm"
 import { Card, CardHeader, CardTitle, CardContent } from "./components/ui/Card"
 import PDFUpload from "./components/upload/PDFUpload"
-import { DatosExtraidos } from "./lib/services/ocr.service"
-
 export default function Home() {
   const [activeSection, setActiveSection] = useState('dashboard')
   const [refreshTable, setRefreshTable] = useState(0)
-  const [datosFormulario, setDatosFormulario] = useState<DatosExtraidos | null>(null)
+  const [archivoSubido, setArchivoSubido] = useState<{url: string, nombre: string} | null>(null)
 
-  const handleDatosExtraidos = (datos: DatosExtraidos, archivoUrl?: string) => {
-    console.log('Datos extraídos:', datos)
-    setDatosFormulario(datos)
-    // Cambiar automáticamente a la sección de órdenes para mostrar el formulario pre-llenado
-    if (datos.tipo === 'orden_compra') {
-      setActiveSection('ordenes')
-    }
+  const handleArchivoSubido = (archivoUrl: string, nombreArchivo: string) => {
+    console.log('Archivo subido:', archivoUrl)
+    setArchivoSubido({ url: archivoUrl, nombre: nombreArchivo })
   }
 
   const renderContent = () => {
@@ -36,32 +30,21 @@ export default function Home() {
               <p className="text-gray-600">Gestiona todas las órdenes de compra</p>
             </div>
             
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <Card>
-                <CardHeader>
-                  <CardTitle>📄 Subir PDF</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <PDFUpload 
-                    tipo="ordenes_compra" 
-                    onDatosExtraidos={handleDatosExtraidos}
-                  />
-                </CardContent>
-              </Card>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <PDFUpload 
+                  tipo="ordenes_compra" 
+                  onArchivoSubido={handleArchivoSubido}
+                />
+                
+                <OrdenCompraForm 
+                  onSuccess={() => setRefreshTable(prev => prev + 1)}
+                  archivoUrl={archivoSubido?.url}
+                  nombreArchivo={archivoSubido?.nombre}
+                />
+              </div>
               
               <Card>
-                <CardHeader>
-                  <CardTitle>Nueva Orden de Compra</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <OrdenCompraForm 
-                    onSuccess={() => setRefreshTable(prev => prev + 1)}
-                    datosIniciales={datosFormulario}
-                  />
-                </CardContent>
-              </Card>
-              
-              <Card className="lg:col-span-1 lg:row-span-2">
                 <CardHeader>
                   <CardTitle>Órdenes Registradas</CardTitle>
                 </CardHeader>

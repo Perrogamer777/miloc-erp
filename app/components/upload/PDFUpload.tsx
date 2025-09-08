@@ -1,47 +1,68 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { OCRService, DatosExtraidos } from '../../lib/services/ocr.service'
-import { SupabaseStorageService, generarRutaArchivo, obtenerTipoArchivo, validarTamanoArchivo } from '../../lib/supabase/storage'
+import { useState, useRef, useEffect } from 'react'
+import { UploadService } from '../../lib/services/ocr.service'
+import { SupabaseStorageService, generarRutaArchivo, validarTamanoArchivo } from '../../lib/supabase/storage'
 
 interface PDFUploadProps {
-  onDatosExtraidos: (datos: DatosExtraidos, archivoUrl?: string) => void
+  onArchivoSubido: (archivoUrl: string, nombreArchivo: string) => void
   tipo: 'facturas' | 'ordenes_compra'
   disabled?: boolean
 }
 
-export default function PDFUpload({ onDatosExtraidos, tipo, disabled = false }: PDFUploadProps) {
-  const [procesando, setProcesando] = useState(false)
+export default function PDFUpload({ onArchivoSubido, tipo, disabled = false }: PDFUploadProps) {
+  const [subiendo, setSubiendo] = useState(false)
   const [progreso, setProgreso] = useState('')
   const [error, setError] = useState('')
+  const [archivoSeleccionado, setArchivoSeleccionado] = useState<File | null>(null)
+  const [urlPreview, setUrlPreview] = useState<string | null>(null)
+  const [exitoso, setExitoso] = useState(false)
+  const [nombreArchivoSubido, setNombreArchivoSubido] = useState<string>('')
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const archivo = event.target.files?.[0]
     if (!archivo) return
 
-    // Validaciones
-    if (!obtenerTipoArchivo(archivo)) {
-      setError('Por favor selecciona un archivo PDF válido')
+    // Limpiar estado anterior
+    if (urlPreview) {
+      URL.revokeObjectURL(urlPreview)
+      setUrlPreview(null)
+    }
+    setArchivoSeleccionado(null)
+    setError('')
+    setExitoso(false)
+    setProgreso('')
+
+    // Validaciones básicas
+    if (!UploadService.esArchivoValido(archivo)) {
+      setError('Por favor selecciona un archivo PDF o una imagen (PNG, JPG, JPEG)')
       return
     }
 
-    if (!validarTamanoArchivo(archivo, 10)) {
+    if (!UploadService.validarTamano(archivo, 10)) {
       setError('El archivo es demasiado grande. Máximo 10MB')
       return
     }
 
-    await procesarArchivo(archivo)
+    // Guardar archivo para previsualización
+    setArchivoSeleccionado(archivo)
+    
+    // Crear URL de previsualización
+    const url = URL.createObjectURL(archivo)
+    setUrlPreview(url)
+
+    await subirArchivo(archivo)
   }
 
-  const procesarArchivo = async (archivo: File) => {
-    setProcesando(true)
+  const subirArchivo = async (archivo: File) => {
+    setSubiendo(true)
     setError('')
     setProgreso('Subiendo archivo...')
     
     try {
       // 1. Subir a Supabase Storage
-      const rutaArchivo = generarRutaArchivo(tipo, `temp_${Date.now()}`)
+      const rutaArchivo = generarRutaArchivo(tipo, `${Date.now()}_${archivo.name}`)
       const { data: uploadData, error: uploadError } = await SupabaseStorageService.subirArchivo(
         'documentos',
         archivo,
@@ -52,38 +73,47 @@ export default function PDFUpload({ onDatosExtraidos, tipo, disabled = false }: 
         throw new Error('Error subiendo archivo: ' + uploadError.message)
       }
 
-      setProgreso('Procesando con OCR...')
-
-      // 2. Procesar con OCR
-      const datosExtraidos = await OCRService.procesarPDF(archivo)
-      
-      if (!datosExtraidos) {
-        throw new Error('No se pudieron extraer datos del PDF')
-      }
-
       setProgreso('Obteniendo URL del archivo...')
 
-      // 3. Obtener URL pública
+      // 2. Obtener URL pública
       const archivoUrl = await SupabaseStorageService.obtenerUrlPublica('documentos', rutaArchivo)
-
-      setProgreso('¡Completado!')
       
-      // 4. Notificar al componente padre
-      onDatosExtraidos(datosExtraidos, archivoUrl || undefined)
+      if (!archivoUrl) {
+        throw new Error('No se pudo obtener la URL del archivo')
+      }
+
+      // 3. Marcar como exitoso y notificar
+      setExitoso(true)
+      setNombreArchivoSubido(archivo.name)
+      onArchivoSubido(archivoUrl, archivo.name)
       
       // Reset
       if (inputRef.current) {
         inputRef.current.value = ''
       }
       
+      // Limpiar mensaje de éxito después de un momento
+      setTimeout(() => {
+        setExitoso(false)
+        setProgreso('')
+      }, 3000)
+      
     } catch (err) {
-      console.error('Error procesando archivo:', err)
+      console.error('Error subiendo archivo:', err)
       setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
-      setProcesando(false)
-      setProgreso('')
+      setSubiendo(false)
     }
   }
+
+  // Limpiar URLs de objeto cuando el componente se desmonte
+  useEffect(() => {
+    return () => {
+      if (urlPreview) {
+        URL.revokeObjectURL(urlPreview)
+      }
+    }
+  }, [urlPreview])
 
   const triggerFileSelect = () => {
     inputRef.current?.click()
@@ -95,10 +125,10 @@ export default function PDFUpload({ onDatosExtraidos, tipo, disabled = false }: 
       <input
         ref={inputRef}
         type="file"
-        accept=".pdf"
+        accept=".pdf,.png,.jpg,.jpeg"
         onChange={handleFileSelect}
         className="hidden"
-        disabled={disabled || procesando}
+        disabled={disabled || subiendo}
       />
 
       {/* Área de drag & drop */}
@@ -106,17 +136,17 @@ export default function PDFUpload({ onDatosExtraidos, tipo, disabled = false }: 
         onClick={triggerFileSelect}
         className={`
           border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
-          ${procesando || disabled
+          ${subiendo || disabled
             ? 'border-gray-300 bg-gray-50 cursor-not-allowed'
             : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'
           }
         `}
       >
-        {procesando ? (
+        {subiendo ? (
           <div className="space-y-4">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
             <div>
-              <p className="text-blue-600 font-medium">Procesando PDF...</p>
+              <p className="text-blue-600 font-medium">Subiendo archivo...</p>
               {progreso && <p className="text-sm text-gray-600">{progreso}</p>}
             </div>
           </div>
@@ -132,23 +162,26 @@ export default function PDFUpload({ onDatosExtraidos, tipo, disabled = false }: 
               </svg>
             </div>
             <div>
-              <p className="text-lg font-medium text-gray-900">
+              <p className="text-lg font-bold text-black">
                 Subir {tipo === 'facturas' ? 'Factura' : 'Orden de Compra'}
               </p>
-              <p className="text-gray-600">
+              <p className="text-black font-medium">
                 Arrastra y suelta tu PDF aquí, o haz clic para seleccionar
               </p>
-              <p className="text-sm text-gray-500 mt-2">
-                Los datos se extraerán automáticamente del documento
+              <p className="text-sm text-black mt-2 font-medium">
+                El documento se guardará para referencia futura
+              </p>
+              <p className="text-xs text-black mt-1 font-medium">
+                Formatos: PDF, PNG, JPG, JPEG (máx. 10MB)
               </p>
             </div>
             <div className="flex items-center justify-center">
               <button
                 type="button"
-                disabled={disabled || procesando}
+                disabled={disabled || subiendo}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Seleccionar Archivo PDF
+                Seleccionar Archivo
               </button>
             </div>
           </div>
@@ -169,17 +202,75 @@ export default function PDFUpload({ onDatosExtraidos, tipo, disabled = false }: 
         </div>
       )}
 
-      {/* Información de ayuda */}
-      <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <h4 className="font-medium text-blue-900 mb-2">📄 Datos que se extraerán automáticamente:</h4>
-        <ul className="text-sm text-blue-800 space-y-1">
-          <li>• RUT de la empresa</li>
-          <li>• Nombre de la empresa</li>
-          <li>• Número de documento</li>
-          <li>• Fecha de emisión</li>
-          <li>• Montos (neto, IVA, total)</li>
-        </ul>
-      </div>
+      {/* Mensaje de éxito bonito y minimalista */}
+      {exitoso && (
+        <div className="mt-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl shadow-sm">
+          <div className="flex items-start space-x-3">
+            <div className="flex-shrink-0">
+              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-sm">
+                <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 12l2 2 4-4"/>
+                  <circle cx="12" cy="12" r="10"/>
+                </svg>
+              </div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-green-800 mb-1">
+                ¡Archivo subido exitosamente!
+              </p>
+              <p className="text-xs text-green-600 truncate">
+                {nombreArchivoSubido}
+              </p>
+              <div className="mt-2 flex items-center space-x-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-xs text-green-600">Listo para usar</span>
+              </div>
+            </div>
+            <button 
+              onClick={() => setExitoso(false)}
+              className="flex-shrink-0 text-green-400 hover:text-green-600 transition-colors"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Previsualización del archivo */}
+      {archivoSeleccionado && urlPreview && (
+        <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+          <div className="flex items-center space-x-3 mb-3">
+            <svg className="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14,2 14,8 20,8"/>
+            </svg>
+            <div>
+              <p className="text-sm font-bold text-black">Archivo seleccionado:</p>
+              <p className="text-xs text-black">{archivoSeleccionado.name}</p>
+            </div>
+          </div>
+          
+          <div className="w-full h-64 border border-gray-300 rounded-lg overflow-hidden bg-white">
+            {archivoSeleccionado.type === 'application/pdf' ? (
+              <iframe
+                src={urlPreview}
+                className="w-full h-full"
+                title="Previsualización PDF"
+                frameBorder="0"
+              />
+            ) : (
+              <img
+                src={urlPreview}
+                alt="Previsualización"
+                className="w-full h-full object-contain"
+              />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

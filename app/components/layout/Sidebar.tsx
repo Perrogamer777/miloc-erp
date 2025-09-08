@@ -56,10 +56,10 @@ export default function Sidebar({ activeSection, onSectionChange }: SidebarProps
   ]
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200 h-screen overflow-y-auto">
-      {/* Header */}
+    <div className="w-64 bg-white border-r border-gray-200 h-screen flex flex-col">
+      {/* Header con usuario integrado */}
       <div className="p-6 border-b border-gray-200">
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 mb-4">
           <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
             <span className="text-white font-semibold text-lg">M</span>
           </div>
@@ -68,10 +68,24 @@ export default function Sidebar({ activeSection, onSectionChange }: SidebarProps
             <p className="text-sm text-gray-500">Sistema de Gestión</p>
           </div>
         </div>
+        
+        {/* Usuario integrado en el header */}
+        <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+            <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-gray-900">Usuario Admin</p>
+            <p className="text-xs text-gray-500">admin@miloc.com</p>
+          </div>
+        </div>
       </div>
 
       {/* Navigation */}
-      <nav className="p-4">
+      <nav className="p-4 flex-1">
         <div className="space-y-2">
           {menuItems.map((item) => (
             <button
@@ -91,22 +105,6 @@ export default function Sidebar({ activeSection, onSectionChange }: SidebarProps
           ))}
         </div>
       </nav>
-
-      {/* User Section */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-            <svg className="w-5 h-5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
-            </svg>
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900">Usuario</p>
-            <p className="text-xs text-gray-500">admin@miloc.com</p>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }

@@ -32,8 +32,17 @@ export class OrdenesCompraService {
       // 2. Validar datos de entrada
       const datosValidados = CrearOrdenCompraSchema.parse(datos)
       
-      // 3. Validar reglas de negocio
-      const erroresNegocio = await this.validarReglasNegocio(datosValidados)
+      // 3. Limpiar campos vacíos para evitar errores de BD
+      const datosLimpios = {
+        ...datosValidados,
+        email_proveedor: datosValidados.email_proveedor || null,
+        telefono_proveedor: datosValidados.telefono_proveedor || null,
+        fecha_entrega_esperada: datosValidados.fecha_entrega_esperada || null,
+        notas: datosValidados.notas || null
+      }
+      
+      // 4. Validar reglas de negocio
+      const erroresNegocio = await this.validarReglasNegocio(datosLimpios)
       if (erroresNegocio.length > 0) {
         return {
           exito: false,
@@ -41,8 +50,8 @@ export class OrdenesCompraService {
         }
       }
       
-      // 4. Crear en la base de datos
-      const ordenCreada = await OrdenesCompraRepository.crear(datosValidados)
+      // 5. Crear en la base de datos
+      const ordenCreada = await OrdenesCompraRepository.crear(datosLimpios)
       
       return {
         exito: true,

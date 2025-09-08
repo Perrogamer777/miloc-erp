@@ -47,10 +47,10 @@ export default function StatCard({ title, value, change, icon, color = 'blue' }:
       </div>
       
       <div>
-        <h3 className="text-2xl font-bold text-gray-900 mb-1">
+        <h3 className="text-2xl font-bold text-black mb-1">
           {value}
         </h3>
-        <p className="text-sm text-gray-600 font-medium">
+        <p className="text-sm text-black font-semibold">
           {title}
         </p>
       </div>
