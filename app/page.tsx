@@ -5,6 +5,7 @@ import Sidebar from "./components/layout/Sidebar"
 import Dashboard from "./components/Dashboard"
 import OrdenesCompraTable from "./components/tables/OrdenesCompraTable"
 import OrdenCompraForm from "./components/forms/OrdenCompraForm"
+import FacturaForm from "./components/forms/FacturaForm"
 import AdminPanel from "./components/admin/AdminPanel"
 import { Card, CardHeader, CardTitle, CardContent } from "./components/ui/Card"
 import PDFUpload from "./components/upload/PDFUpload"
@@ -62,19 +63,37 @@ export default function Home() {
           <div className="space-y-8">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 mb-2">Facturas</h1>
-              <p className="text-gray-900">Gestiona todas las facturas</p>
+              <p className="text-gray-900">Registra y gestiona todas las facturas</p>
             </div>
             
-            <Card>
-              <CardHeader>
-                <CardTitle>Lista de Facturas</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12 text-gray-800">
-                  <p>Funcionalidad de facturas próximamente</p>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <PDFUpload 
+                  tipo="facturas" 
+                  titulo="Subir PDF de Factura"
+                  descripcion="Sube el PDF de la factura para registrar en el sistema"
+                  onArchivoSubido={handleArchivoSubido}
+                />
+                
+                <FacturaForm 
+                  onSuccess={() => setRefreshTable(prev => prev + 1)}
+                  archivoUrl={archivoSubido?.url}
+                  nombreArchivo={archivoSubido?.nombre}
+                />
+              </div>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Facturas Registradas</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8">
+                    <p className="text-gray-800 mb-4">Panel de facturas disponible próximamente</p>
+                    <p className="text-sm text-gray-600">Mientras tanto, puedes registrar facturas en el panel de admin</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         )
       

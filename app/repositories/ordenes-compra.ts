@@ -38,9 +38,17 @@ export class OrdenesCompraRepository {
   static async crear(orden: NuevaOrdenCompra): Promise<OrdenCompra> {
     const supabase = crearClienteSupabase()
     
+    // Convertir campos vacíos a null para PostgreSQL
+    const ordenLimpia = {
+      ...orden,
+      fecha_entrega_esperada: orden.fecha_entrega_esperada === '' ? null : orden.fecha_entrega_esperada,
+      url_pdf: orden.url_pdf === '' ? null : orden.url_pdf,
+      notas: orden.notas === '' ? null : orden.notas
+    }
+    
     const { data, error } = await supabase
       .from('ordenes_compra')
-      .insert(orden)
+      .insert(ordenLimpia)
       .select()
       .single()
     
@@ -57,9 +65,17 @@ export class OrdenesCompraRepository {
   static async actualizar(id: string, cambios: ActualizarOrdenCompra): Promise<OrdenCompra> {
     const supabase = crearClienteSupabase()
     
+    // Convertir campos vacíos a null para PostgreSQL
+    const cambiosLimpios = {
+      ...cambios,
+      ...(cambios.fecha_entrega_esperada !== undefined && { fecha_entrega_esperada: cambios.fecha_entrega_esperada === '' ? null : cambios.fecha_entrega_esperada }),
+      ...(cambios.url_pdf !== undefined && { url_pdf: cambios.url_pdf === '' ? null : cambios.url_pdf }),
+      ...(cambios.notas !== undefined && { notas: cambios.notas === '' ? null : cambios.notas })
+    }
+    
     const { data, error } = await supabase
       .from('ordenes_compra')
-      .update(cambios)
+      .update(cambiosLimpios)
       .eq('id', id)
       .select()
       .single()

@@ -32,11 +32,10 @@ export class OrdenesCompraService {
       // 2. Validar datos de entrada
       const datosValidados = CrearOrdenCompraSchema.parse(datos)
       
-      // 3. Limpiar campos vacíos para evitar errores de BD
+      // 3. Limpiar campos vacíos y asignar valores por defecto
       const datosLimpios = {
         ...datosValidados,
-        email_proveedor: datosValidados.email_proveedor || null,
-        telefono_proveedor: datosValidados.telefono_proveedor || null,
+        estado: datosValidados.estado || 'pendiente',
         fecha_entrega_esperada: datosValidados.fecha_entrega_esperada || null,
         notas: datosValidados.notas || null
       }
@@ -212,7 +211,8 @@ export class OrdenesCompraService {
   ): boolean {
     const transicionesValidas: Record<string, string[]> = {
       'pendiente': ['enviada', 'cancelada'],
-      'enviada': [], // Estado final
+      'enviada': ['entregada', 'cancelada'],
+      'entregada': [], // Estado final
       'cancelada': [] // Estado final
     }
     

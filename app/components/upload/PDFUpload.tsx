@@ -8,9 +8,17 @@ interface PDFUploadProps {
   onArchivoSubido: (archivoUrl: string, nombreArchivo: string) => void
   tipo: 'facturas' | 'ordenes_compra'
   disabled?: boolean
+  titulo?: string
+  descripcion?: string
 }
 
-export default function PDFUpload({ onArchivoSubido, tipo, disabled = false }: PDFUploadProps) {
+export default function PDFUpload({ 
+  onArchivoSubido, 
+  tipo, 
+  disabled = false, 
+  titulo = 'Subir Documento PDF',
+  descripcion = 'Arrastra y suelta tu archivo PDF aquí, o haz clic para seleccionar'
+}: PDFUploadProps) {
   const [subiendo, setSubiendo] = useState(false)
   const [progreso, setProgreso] = useState('')
   const [error, setError] = useState('')
@@ -163,10 +171,10 @@ export default function PDFUpload({ onArchivoSubido, tipo, disabled = false }: P
             </div>
             <div>
               <p className="text-lg font-bold text-black">
-                Subir {tipo === 'facturas' ? 'Factura' : 'Orden de Compra'}
+                {titulo}
               </p>
               <p className="text-black font-medium">
-                Arrastra y suelta tu PDF aquí, o haz clic para seleccionar
+                {descripcion}
               </p>
               <p className="text-sm text-black mt-2 font-medium">
                 El documento se guardará para referencia futura

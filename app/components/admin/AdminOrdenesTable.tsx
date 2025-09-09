@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { OrdenesCompraRepository } from '../../repositories/ordenes-compra'
 import { Database } from '../../lib/types/database'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/Table'
-import Badge, { getEstadoBadgeProps } from '../ui/Badge'
 import Button from '../ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 
@@ -60,10 +59,10 @@ export default function AdminOrdenesTable() {
     }
   }
 
-  const formatearMonto = (monto: number, moneda: string) => {
+  const formatearMonto = (monto: number) => {
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',
-      currency: moneda === 'CLP' ? 'CLP' : moneda,
+      currency: 'CLP',
       minimumFractionDigits: 0,
     }).format(monto)
   }
@@ -124,7 +123,6 @@ export default function AdminOrdenesTable() {
                   <TableHead className="text-black">Número</TableHead>
                   <TableHead className="text-black">Proveedor</TableHead>
                   <TableHead className="text-black">Monto</TableHead>
-                  <TableHead className="text-black">Estado</TableHead>
                   <TableHead className="text-black">Fecha Orden</TableHead>
                   <TableHead className="text-black">Entrega Esperada</TableHead>
                   <TableHead className="text-black">Acciones</TableHead>
@@ -133,8 +131,6 @@ export default function AdminOrdenesTable() {
               
               <TableBody>
                 {ordenes.map((orden) => {
-                  const estadoBadge = getEstadoBadgeProps(orden.estado)
-                  
                   return (
                     <TableRow key={orden.id}>
                       <TableCell className="font-medium text-black">
@@ -144,20 +140,11 @@ export default function AdminOrdenesTable() {
                       <TableCell className="text-black">
                         <div>
                           <p className="font-medium">{orden.nombre_proveedor}</p>
-                          {orden.email_proveedor && (
-                            <p className="text-sm">{orden.email_proveedor}</p>
-                          )}
                         </div>
                       </TableCell>
                       
                       <TableCell className="text-black">
-                        {formatearMonto(Number(orden.monto_total), orden.moneda)}
-                      </TableCell>
-                      
-                      <TableCell>
-                        <Badge variant={estadoBadge.variant} size="sm">
-                          {estadoBadge.children}
-                        </Badge>
+                        {formatearMonto(Number(orden.monto_total))}
                       </TableCell>
                       
                       <TableCell className="text-black">
@@ -231,12 +218,10 @@ interface EditOrdenModalProps {
 function EditOrdenModal({ orden, onSave, onCancel }: EditOrdenModalProps) {
   const [formData, setFormData] = useState({
     nombre_proveedor: orden.nombre_proveedor,
-    email_proveedor: orden.email_proveedor || '',
     estado: orden.estado,
     monto_total: orden.monto_total.toString(),
-    moneda: orden.moneda,
     fecha_entrega_esperada: orden.fecha_entrega_esperada || '',
-    observaciones: orden.observaciones || ''
+    notas: orden.notas || ''
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -245,8 +230,7 @@ function EditOrdenModal({ orden, onSave, onCancel }: EditOrdenModalProps) {
       ...formData,
       monto_total: parseFloat(formData.monto_total),
       fecha_entrega_esperada: formData.fecha_entrega_esperada || null,
-      email_proveedor: formData.email_proveedor || null,
-      observaciones: formData.observaciones || null
+      notas: formData.notas || null
     })
   }
 
@@ -271,18 +255,6 @@ function EditOrdenModal({ orden, onSave, onCancel }: EditOrdenModalProps) {
 
           <div>
             <label className="block text-sm font-medium text-black mb-1">
-              Email Proveedor
-            </label>
-            <input
-              type="email"
-              value={formData.email_proveedor}
-              onChange={(e) => setFormData({...formData, email_proveedor: e.target.value})}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-black"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-black mb-1">
               Estado
             </label>
             <select
@@ -292,7 +264,7 @@ function EditOrdenModal({ orden, onSave, onCancel }: EditOrdenModalProps) {
             >
               <option value="pendiente">Pendiente</option>
               <option value="enviada">Enviada</option>
-              <option value="recibida">Recibida</option>
+              <option value="entregada">Entregada</option>
               <option value="cancelada">Cancelada</option>
             </select>
           </div>
@@ -325,11 +297,11 @@ function EditOrdenModal({ orden, onSave, onCancel }: EditOrdenModalProps) {
 
           <div>
             <label className="block text-sm font-medium text-black mb-1">
-              Observaciones
+              Notas
             </label>
             <textarea
-              value={formData.observaciones}
-              onChange={(e) => setFormData({...formData, observaciones: e.target.value})}
+              value={formData.notas}
+              onChange={(e) => setFormData({...formData, notas: e.target.value})}
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-black"
               rows={3}
             />

@@ -31,12 +31,12 @@ export default function FacturaForm({ onSuccess, onCancel, archivoUrl, nombreArc
   const [formData, setFormData] = useState({
     numero_factura: '',
     orden_compra_id: '',
-    descripcion_items: '',
-    monto_neto: 0,
-    iva: 0,
+    nombre_vendedor: '',
     monto_total: 0,
-    fecha_emision: new Date().toISOString().split('T')[0],
-    estado_pago: 'pendiente' as 'pendiente' | 'pagado' | 'vencido',
+    estado: 'pendiente',
+    fecha_factura: new Date().toISOString().split('T')[0],
+    fecha_pago: '',
+    url_pdf: archivoUrl || '',
     notas: archivoUrl ? `📄 Archivo adjunto: ${nombreArchivo || 'factura.pdf'}` : ''
   })
 
@@ -48,14 +48,12 @@ export default function FacturaForm({ onSuccess, onCancel, archivoUrl, nombreArc
   const cargarOrdenesCompra = async () => {
     setLoadingOrdenes(true)
     try {
-      const resultado = await OrdenesCompraService.obtenerTodas()
-      if (resultado.exito && resultado.datos) {
-        // Filtrar solo órdenes pendientes o aprobadas
-        const ordenesFiltradas = resultado.datos.filter((orden: any) => 
-          orden.estado === 'pendiente' || orden.estado === 'aprobada'
-        )
-        setOrdenesCompra(ordenesFiltradas)
-      }
+      // Importar el repositorio directamente para obtener las órdenes
+      const { OrdenesCompraRepository } = await import('../../repositories/ordenes-compra')
+      const ordenes = await OrdenesCompraRepository.obtenerTodas()
+      
+      // Todas las órdenes pueden ser facturadas
+      setOrdenesCompra(ordenes)
     } catch (error) {
       console.error('Error cargando órdenes de compra:', error)
     } finally {
@@ -63,16 +61,16 @@ export default function FacturaForm({ onSuccess, onCancel, archivoUrl, nombreArc
     }
   }
 
-  // Calcular IVA automáticamente cuando cambia el monto neto
+  // Actualizar URL del archivo cuando cambie
   useEffect(() => {
-    const iva = formData.monto_neto * 0.19
-    const total = formData.monto_neto + iva
-    setFormData(prev => ({
-      ...prev,
-      iva: Math.round(iva),
-      monto_total: Math.round(total)
-    }))
-  }, [formData.monto_neto])
+    if (archivoUrl) {
+      setFormData(prev => ({
+        ...prev,
+        url_pdf: archivoUrl,
+        notas: `📄 Archivo adjunto: ${nombreArchivo || 'factura.pdf'}`
+      }))
+    }
+  }, [archivoUrl, nombreArchivo])
 
   const handleInputChange = (field: string, value: string | number) => {
     setFormData(prev => ({
@@ -92,14 +90,20 @@ export default function FacturaForm({ onSuccess, onCancel, archivoUrl, nombreArc
 
   const handleOrdenChange = (ordenId: string) => {
     const ordenSeleccionada = ordenesCompra.find(orden => orden.id === ordenId)
-    if (ordenSeleccionada) {
-      // Auto-completar algunos campos basados en la orden de compra
-      const montoNeto = Math.round(ordenSeleccionada.monto_total / 1.19)
-      setFormData(prev => ({
-        ...prev,
-        orden_compra_id: ordenId,
-        monto_neto: montoNeto
-      }))
+    
+    setFormData(prev => ({
+      ...prev,
+      orden_compra_id: ordenId,
+      nombre_vendedor: ordenSeleccionada?.nombre_proveedor || ''
+    }))
+    
+    // Limpiar error si existía
+    if (errors.orden_compra_id) {
+      setErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors.orden_compra_id
+        return newErrors
+      })
     }
   }
 
@@ -110,43 +114,43 @@ export default function FacturaForm({ onSuccess, onCancel, archivoUrl, nombreArc
     
     try {
       // Validaciones básicas
-      if (!formData.numero_factura.trim()) {
-        setErrors({ numero_factura: 'El número de factura es requerido' })
-        return
-      }
-      
       if (!formData.orden_compra_id) {
         setErrors({ orden_compra_id: 'Debe seleccionar una orden de compra' })
         return
       }
       
-      if (!formData.descripcion_items.trim()) {
-        setErrors({ descripcion_items: 'La descripción de items es requerida' })
+      if (!formData.numero_factura.trim()) {
+        setErrors({ numero_factura: 'El número de factura es requerido' })
         return
       }
       
-      if (formData.monto_neto <= 0) {
-        setErrors({ monto_neto: 'El monto neto debe ser mayor a 0' })
+      if (!formData.nombre_vendedor.trim()) {
+        setErrors({ nombre_vendedor: 'El nombre del vendedor es requerido' })
         return
       }
-
+      
+      if (formData.monto_total <= 0) {
+        setErrors({ monto_total: 'El monto total debe ser mayor a 0' })
+        return
+      }
+      
       // Preparar datos para envío
       const datosFactura = {
         numero_factura: formData.numero_factura,
         orden_compra_id: formData.orden_compra_id,
-        tipo_documento: 'factura_electronica',
-        timbre_electronico: 'pendiente',
-        fecha_emision: formData.fecha_emision,
-        descripcion_trabajo: formData.descripcion_items,
-        monto_neto: formData.monto_neto,
-        iva: formData.iva,
+        nombre_vendedor: formData.nombre_vendedor,
         monto_total: formData.monto_total,
-        estado_pago: formData.estado_pago,
-        archivo_pdf_url: archivoUrl || null,
-        notas: formData.notas
+        estado: formData.estado,
+        fecha_factura: formData.fecha_factura,
+        fecha_pago: formData.fecha_pago || '',
+        url_pdf: formData.url_pdf || '',
+        notas: formData.notas || ''
       }
 
+      console.log('Enviando datos de factura:', datosFactura)
+      console.log('Schema esperado: orden_compra_id, numero_factura, nombre_item, monto_neto, iva, monto_total')
       const resultado = await FacturasService.crear(datosFactura)
+      console.log('Resultado del servicio:', resultado)
       
       if (resultado.exito) {
         onSuccess?.(resultado.datos)
@@ -154,19 +158,22 @@ export default function FacturaForm({ onSuccess, onCancel, archivoUrl, nombreArc
         setFormData({
           numero_factura: '',
           orden_compra_id: '',
-          descripcion_items: '',
-          monto_neto: 0,
-          iva: 0,
+          nombre_vendedor: '',
           monto_total: 0,
-          fecha_emision: new Date().toISOString().split('T')[0],
-          estado_pago: 'pendiente',
+          estado: 'pendiente',
+          fecha_factura: new Date().toISOString().split('T')[0],
+          fecha_pago: '',
+          url_pdf: '',
           notas: ''
         })
       } else {
-        setErrors({ general: resultado.mensaje || 'Error al crear la factura' })
+        console.error('Error en el servicio:', resultado.errores)
+        const erroresTexto = resultado.errores ? resultado.errores.join(', ') : 'Error desconocido'
+        setErrors({ general: `Error al crear la factura: ${erroresTexto}` })
       }
     } catch (error) {
-      setErrors({ general: 'Error inesperado al crear la factura' })
+      console.error('Error inesperado:', error)
+      setErrors({ general: `Error inesperado: ${error instanceof Error ? error.message : 'Error desconocido'}` })
     } finally {
       setLoading(false)
     }
@@ -186,26 +193,15 @@ export default function FacturaForm({ onSuccess, onCancel, archivoUrl, nombreArc
             </div>
           )}
           
-          {/* Campos básicos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Número de Factura *"
-              placeholder="Ej: 001-0000001"
-              value={formData.numero_factura}
-              onChange={(e) => handleInputChange('numero_factura', e.target.value)}
-              error={errors.numero_factura}
-              required
-            />
-            
-            <Input
-              label="Fecha de Emisión *"
-              type="date"
-              value={formData.fecha_emision}
-              onChange={(e) => handleInputChange('fecha_emision', e.target.value)}
-              error={errors.fecha_emision}
-              required
-            />
-          </div>
+          {/* Número de Factura */}
+          <Input
+            label="Número de Factura *"
+            placeholder="Ej: 001-0000001"
+            value={formData.numero_factura}
+            onChange={(e) => handleInputChange('numero_factura', e.target.value)}
+            error={errors.numero_factura}
+            required
+          />
 
           {/* Selector de Orden de Compra */}
           <div className="space-y-1">
@@ -234,84 +230,92 @@ export default function FacturaForm({ onSuccess, onCancel, archivoUrl, nombreArc
             )}
           </div>
 
-          {/* Descripción de items */}
+          {/* Nombre del Vendedor */}
+          <Input
+            label="Nombre del Vendedor *"
+            placeholder="Nombre del vendedor"
+            value={formData.nombre_vendedor}
+            onChange={(e) => handleInputChange('nombre_vendedor', e.target.value)}
+            error={errors.nombre_vendedor}
+            required
+          />
+
+          {/* Fecha de Factura */}
+          <Input
+            label="Fecha de Factura *"
+            type="date"
+            value={formData.fecha_factura}
+            onChange={(e) => handleInputChange('fecha_factura', e.target.value)}
+            error={errors.fecha_factura}
+            required
+          />
+
+          {/* Monto Total */}
+          <Input
+            label="Monto Total *"
+            type="number"
+            min="0"
+            step="1"
+            placeholder="0"
+            value={formData.monto_total || ''}
+            onChange={(e) => handleInputChange('monto_total', parseFloat(e.target.value) || 0)}
+            error={errors.monto_total}
+            required
+          />
+
+          {/* Estado */}
           <div className="space-y-1">
             <label className="block text-sm font-bold text-black">
-              Descripción de Items/Servicios *
-            </label>
-            <textarea
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-black placeholder:text-gray-500 font-medium focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-              rows={4}
-              placeholder="Describe los productos o servicios facturados..."
-              value={formData.descripcion_items}
-              onChange={(e) => handleInputChange('descripcion_items', e.target.value)}
-              required
-            />
-            {errors.descripcion_items && (
-              <p className="text-sm text-red-600">{errors.descripcion_items}</p>
-            )}
-          </div>
-
-          {/* Montos */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Input
-              label="Monto Neto *"
-              type="number"
-              min="0"
-              step="1"
-              placeholder="0"
-              value={formData.monto_neto || ''}
-              onChange={(e) => handleInputChange('monto_neto', parseFloat(e.target.value) || 0)}
-              error={errors.monto_neto}
-              required
-            />
-            
-            <Input
-              label="IVA (19%)"
-              type="number"
-              value={formData.iva}
-              disabled
-              className="bg-gray-50"
-            />
-            
-            <Input
-              label="Monto Total"
-              type="number"
-              value={formData.monto_total}
-              disabled
-              className="bg-gray-50"
-            />
-          </div>
-
-          {/* Estado de pago */}
-          <div className="space-y-1">
-            <label className="block text-sm font-bold text-black">
-              Estado de Pago
+              Estado de la Factura
             </label>
             <select
               className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-black font-medium focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-              value={formData.estado_pago}
-              onChange={(e) => handleInputChange('estado_pago', e.target.value)}
+              value={formData.estado}
+              onChange={(e) => handleInputChange('estado', e.target.value)}
             >
               <option value="pendiente">Pendiente</option>
-              <option value="pagado">Pagado</option>
-              <option value="vencido">Vencido</option>
+              <option value="pagada">Pagada</option>
+              <option value="anulada">Anulada</option>
             </select>
           </div>
-          
+
+          {/* Fecha de Pago */}
+          <Input
+            label="Fecha de Pago (opcional)"
+            type="date"
+            value={formData.fecha_pago}
+            onChange={(e) => handleInputChange('fecha_pago', e.target.value)}
+            error={errors.fecha_pago}
+          />
+
+          {/* Archivo adjunto */}
+          {archivoUrl && (
+            <div className="bg-green-50 p-4 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span className="text-green-800 font-medium">
+                  PDF de factura adjuntado: {nombreArchivo || 'factura.pdf'}
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Notas */}
           <div className="space-y-1">
             <label className="block text-sm font-bold text-black">
-              Notas
+              Notas Adicionales
             </label>
             <textarea
               className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-black placeholder:text-gray-500 font-medium focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
               rows={3}
-              placeholder="Información adicional sobre la factura..."
+              placeholder="Observaciones o información adicional sobre la factura..."
               value={formData.notas || ''}
               onChange={(e) => handleInputChange('notas', e.target.value)}
             />
           </div>
+
           
           <div className="flex justify-end space-x-3 pt-4">
             {onCancel && (

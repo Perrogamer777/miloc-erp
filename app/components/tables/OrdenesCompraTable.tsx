@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { OrdenesCompraRepository } from '../../repositories/ordenes-compra'
 import { Database } from '../../lib/types/database'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/Table'
-import Badge, { getEstadoBadgeProps } from '../ui/Badge'
 import Button from '../ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
 
@@ -38,10 +37,10 @@ export default function OrdenesCompraTable({ onEdit, onDelete, refreshTrigger }:
     loadOrdenes()
   }, [refreshTrigger])
   
-  const formatearMonto = (monto: number, moneda: string) => {
+  const formatearMonto = (monto: number) => {
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',
-      currency: moneda === 'CLP' ? 'CLP' : moneda,
+      currency: 'CLP',
       minimumFractionDigits: 0,
     }).format(monto)
   }
@@ -102,7 +101,6 @@ export default function OrdenesCompraTable({ onEdit, onDelete, refreshTrigger }:
                 <TableHead className="text-black">Número</TableHead>
                 <TableHead className="text-black">Proveedor</TableHead>
                 <TableHead className="text-black">Monto</TableHead>
-                <TableHead className="text-black">Estado</TableHead>
                 <TableHead className="text-black">Fecha Orden</TableHead>
                 <TableHead className="text-black">Entrega Esperada</TableHead>
                 <TableHead className="text-black">Acciones</TableHead>
@@ -111,8 +109,6 @@ export default function OrdenesCompraTable({ onEdit, onDelete, refreshTrigger }:
             
             <TableBody>
               {ordenes.map((orden) => {
-                const estadoBadge = getEstadoBadgeProps(orden.estado)
-                
                 return (
                   <TableRow key={orden.id}>
                     <TableCell className="font-medium text-black">
@@ -122,20 +118,11 @@ export default function OrdenesCompraTable({ onEdit, onDelete, refreshTrigger }:
                     <TableCell className="text-black">
                       <div>
                         <p className="font-medium">{orden.nombre_proveedor}</p>
-                        {orden.email_proveedor && (
-                          <p className="text-sm">{orden.email_proveedor}</p>
-                        )}
                       </div>
                     </TableCell>
                     
                     <TableCell className="text-black">
-                      {formatearMonto(Number(orden.monto_total), orden.moneda)}
-                    </TableCell>
-                    
-                    <TableCell>
-                      <Badge variant={estadoBadge.variant} size="sm">
-                        {estadoBadge.children}
-                      </Badge>
+                      {formatearMonto(Number(orden.monto_total))}
                     </TableCell>
                     
                     <TableCell className="text-black">
@@ -161,7 +148,7 @@ export default function OrdenesCompraTable({ onEdit, onDelete, refreshTrigger }:
                           </Button>
                         )}
                         
-                        {onDelete && orden.estado === 'pendiente' && (
+                        {onDelete && (
                           <Button
                             size="sm"
                             variant="danger"

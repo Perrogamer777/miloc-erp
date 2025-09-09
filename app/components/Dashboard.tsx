@@ -9,9 +9,8 @@ import OrdenesCompraTable from './tables/OrdenesCompraTable'
 
 export default function Dashboard() {
   const [stats, setStats] = useState({
-    facturasPendientes: 0,
-    montoPendientePago: 0,
-    cotizacionesEnviadas: 0,
+    totalFacturas: 0,
+    montoTotalFacturado: 0,
     ordenesCompraRecibidas: 0
   })
   
@@ -23,27 +22,27 @@ export default function Dashboard() {
   
   const loadStats = async () => {
     try {
-      // Obtener datos reales de facturas
-      const resumenFacturas = await FacturasService.obtenerResumenPendientes()
+      // Obtener todas las facturas
+      const todasFacturas = await FacturasService.obtenerTodas()
+      
+      // Calcular métricas de facturas
+      const totalFacturas = todasFacturas.length
+      const montoTotal = todasFacturas.reduce((sum, f) => sum + Number(f.monto_total), 0)
       
       // Obtener datos reales de órdenes de compra
       const ordenesRecibidas = await OrdenesCompraRepository.obtenerTodas()
-      const ordenesPendientes = await OrdenesCompraRepository.obtenerPorEstado('pendiente')
-      const ordenesEnviadas = await OrdenesCompraRepository.obtenerPorEstado('enviada')
       
       setStats({
-        facturasPendientes: resumenFacturas.total_facturas,
-        montoPendientePago: resumenFacturas.monto_total,
-        cotizacionesEnviadas: ordenesEnviadas.length,
+        totalFacturas: totalFacturas,
+        montoTotalFacturado: montoTotal,
         ordenesCompraRecibidas: ordenesRecibidas.length
       })
     } catch (error) {
       console.error('Error loading stats:', error)
       // En caso de error, mantener valores en 0
       setStats({
-        facturasPendientes: 0,
-        montoPendientePago: 0,
-        cotizacionesEnviadas: 0,
+        totalFacturas: 0,
+        montoTotalFacturado: 0,
         ordenesCompraRecibidas: 0
       })
     } finally {
@@ -79,8 +78,8 @@ export default function Dashboard() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
-          title="Facturas Pendientes de Pago"
-          value={stats.facturasPendientes}
+          title="Total Facturas"
+          value={stats.totalFacturas}
           icon={
             <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -89,36 +88,23 @@ export default function Dashboard() {
               <line x1="16" y1="17" x2="8" y2="17"/>
             </svg>
           }
-          color="red"
+          color="blue"
         />
         
         <StatCard
-          title="Monto Pendiente de Pago"
-          value={formatCurrency(stats.montoPendientePago)}
+          title="Monto Total Facturado"
+          value={formatCurrency(stats.montoTotalFacturado)}
           icon={
             <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="12" y1="1" x2="12" y2="23"/>
               <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
             </svg>
           }
-          color="purple"
+          color="green"
         />
         
         <StatCard
-          title="Cotizaciones Enviadas"
-          value={stats.cotizacionesEnviadas}
-          icon={
-            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-              <line x1="9" y1="9" x2="15" y2="9"/>
-              <line x1="9" y1="13" x2="12" y2="13"/>
-            </svg>
-          }
-          color="blue"
-        />
-        
-        <StatCard
-          title="Órdenes de Compra Recibidas"
+          title="Órdenes de Compra"
           value={stats.ordenesCompraRecibidas}
           icon={
             <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -127,7 +113,7 @@ export default function Dashboard() {
               <path d="m9 12 2 2 4-4"/>
             </svg>
           }
-          color="green"
+          color="purple"
         />
       </div>
       

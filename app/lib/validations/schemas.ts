@@ -3,7 +3,7 @@ import { z } from 'zod'
 // ===== ESQUEMAS BASE =====
 
 export const EstadoOrdenCompraSchema = z.enum(['pendiente', 'enviada', 'cancelada'])
-export const EstadoFacturaSchema = z.enum(['pendiente', 'enviada', 'pagada'])
+export const EstadoFacturaSchema = z.enum(['pendiente', 'pagada', 'anulada'])
 export const MonedaSchema = z.enum(['USD', 'COP', 'CLP', 'EUR'])
 
 // ===== ESQUEMAS DE ÓRDENES DE COMPRA =====
@@ -17,29 +17,24 @@ export const CrearOrdenCompraSchema = z.object({
     .min(1, 'El nombre del proveedor es requerido')
     .max(200, 'El nombre no puede exceder 200 caracteres'),
   
-  email_proveedor: z.string()
-    .email('Email inválido')
-    .optional()
-    .or(z.literal('')),
-  
-  telefono_proveedor: z.string()
-    .max(20, 'El teléfono no puede exceder 20 caracteres')
-    .optional()
-    .or(z.literal('')),
-  
   monto_total: z.number()
     .positive('El monto debe ser positivo')
     .max(999999999.99, 'El monto excede el límite permitido'),
   
-  moneda: MonedaSchema.default('CLP'),
-  
-  estado: EstadoOrdenCompraSchema.default('pendiente'),
+  estado: z.string()
+    .min(1, 'El estado es requerido')
+    .default('pendiente'),
   
   fecha_orden: z.string()
-    .refine((date) => !isNaN(Date.parse(date)), 'Fecha inválida'),
+    .refine((date) => !isNaN(Date.parse(date)), 'Fecha inválida')
+    .default(() => new Date().toISOString().split('T')[0]),
   
   fecha_entrega_esperada: z.string()
     .refine((date) => !isNaN(Date.parse(date)), 'Fecha inválida')
+    .optional()
+    .or(z.literal('')),
+  
+  url_pdf: z.string()
     .optional()
     .or(z.literal('')),
   
@@ -55,42 +50,34 @@ export const ActualizarOrdenCompraSchema = CrearOrdenCompraSchema.partial()
 
 export const CrearFacturaSchema = z.object({
   numero_factura: z.string()
-    .max(50, 'El número de factura no puede exceder 50 caracteres')
-    .default(''),
+    .min(1, 'El número de factura es requerido')
+    .max(50, 'El número de factura no puede exceder 50 caracteres'),
   
   orden_compra_id: z.string()
-    .uuid('ID de orden de compra inválido'),
+    .min(1, 'Debe seleccionar una orden de compra'),
   
   nombre_vendedor: z.string()
     .min(1, 'El nombre del vendedor es requerido')
     .max(200, 'El nombre no puede exceder 200 caracteres'),
   
-  email_vendedor: z.string()
-    .email('Email inválido')
-    .optional()
-    .or(z.literal('')),
-  
-  telefono_vendedor: z.string()
-    .max(20, 'El teléfono no puede exceder 20 caracteres')
-    .optional()
-    .or(z.literal('')),
-  
   monto_total: z.number()
-    .positive('El monto debe ser positivo')
+    .positive('El monto total debe ser positivo')
     .max(999999999.99, 'El monto excede el límite permitido'),
   
-  moneda: MonedaSchema.default('CLP'),
-  
-  estado: EstadoFacturaSchema.default('pendiente'),
+  estado: z.string()
+    .min(1, 'El estado es requerido')
+    .default('pendiente'),
   
   fecha_factura: z.string()
-    .refine((date) => !isNaN(Date.parse(date)), 'Fecha inválida'),
-  
-  fecha_vencimiento: z.string()
-    .refine((date) => !isNaN(Date.parse(date)), 'Fecha inválida'),
+    .refine((date) => !isNaN(Date.parse(date)), 'Fecha inválida')
+    .default(() => new Date().toISOString().split('T')[0]),
   
   fecha_pago: z.string()
     .refine((date) => !isNaN(Date.parse(date)), 'Fecha inválida')
+    .optional()
+    .or(z.literal('')),
+  
+  url_pdf: z.string()
     .optional()
     .or(z.literal('')),
   
@@ -98,18 +85,7 @@ export const CrearFacturaSchema = z.object({
     .max(1000, 'Las notas no pueden exceder 1000 caracteres')
     .optional()
     .or(z.literal(''))
-}).refine(
-  (data) => {
-    if (data.fecha_vencimiento && data.fecha_factura) {
-      return new Date(data.fecha_vencimiento) >= new Date(data.fecha_factura)
-    }
-    return true
-  },
-  {
-    message: 'La fecha de vencimiento debe ser posterior o igual a la fecha de factura',
-    path: ['fecha_vencimiento']
-  }
-)
+})
 
 export const ActualizarFacturaSchema = CrearFacturaSchema.partial()
 

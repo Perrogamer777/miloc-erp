@@ -63,9 +63,17 @@ export class FacturasRepository {
   static async crear(factura: NuevaFactura): Promise<Factura> {
     const supabase = crearClienteSupabase()
     
+    // Convertir fechas vacías a null para PostgreSQL
+    const facturaLimpia = {
+      ...factura,
+      fecha_pago: factura.fecha_pago === '' ? null : factura.fecha_pago,
+      url_pdf: factura.url_pdf === '' ? null : factura.url_pdf,
+      notas: factura.notas === '' ? null : factura.notas
+    }
+    
     const { data, error } = await supabase
       .from('facturas')
-      .insert(factura)
+      .insert(facturaLimpia)
       .select()
       .single()
     
@@ -82,9 +90,17 @@ export class FacturasRepository {
   static async actualizar(id: string, cambios: ActualizarFactura): Promise<Factura> {
     const supabase = crearClienteSupabase()
     
+    // Convertir fechas vacías a null para PostgreSQL
+    const cambiosLimpios = {
+      ...cambios,
+      ...(cambios.fecha_pago !== undefined && { fecha_pago: cambios.fecha_pago === '' ? null : cambios.fecha_pago }),
+      ...(cambios.url_pdf !== undefined && { url_pdf: cambios.url_pdf === '' ? null : cambios.url_pdf }),
+      ...(cambios.notas !== undefined && { notas: cambios.notas === '' ? null : cambios.notas })
+    }
+    
     const { data, error } = await supabase
       .from('facturas')
-      .update(cambios)
+      .update(cambiosLimpios)
       .eq('id', id)
       .select()
       .single()
@@ -141,7 +157,7 @@ export class FacturasRepository {
       .from('facturas')
       .select('*')
       .eq('orden_compra_id', ordenCompraId)
-      .order('fecha_factura', { ascending: false })
+      .order('fecha_emision', { ascending: false })
     
     if (error) {
       throw new Error(`Error al obtener facturas por orden: ${error.message}`)

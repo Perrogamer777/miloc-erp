@@ -90,21 +90,7 @@ export class FacturasService {
       // 2. Validar datos de entrada
       const cambiosValidados = ActualizarFacturaSchema.parse(cambios)
       
-      // 3. Validar transiciones de estado
-      if (cambiosValidados.estado && cambiosValidados.estado !== factura.estado) {
-        const transicionValida = this.validarTransicionEstado(factura.estado, cambiosValidados.estado)
-        if (!transicionValida) {
-          return {
-            exito: false,
-            errores: [`No se puede cambiar el estado de '${factura.estado}' a '${cambiosValidados.estado}'`]
-          }
-        }
-      }
-      
-      // 4. Si se marca como pagada, agregar fecha de pago automáticamente
-      if (cambiosValidados.estado === 'pagada' && !cambiosValidados.fecha_pago) {
-        cambiosValidados.fecha_pago = new Date().toISOString().split('T')[0]
-      }
+      // Las actualizaciones son más simples ahora
       
       // 5. Actualizar en la base de datos
       const facturaActualizada = await FacturasRepository.actualizar(id, cambiosValidados)
@@ -124,55 +110,13 @@ export class FacturasService {
     }
   }
   
-  /**
-   * Marcar factura como pagada
-   */
-  static async marcarComoPagada(id: string, fechaPago?: string): Promise<{
-    exito: boolean
-    datos?: Factura
-    errores?: string[]
-  }> {
-    return this.actualizar(id, {
-      estado: 'pagada',
-      fecha_pago: fechaPago || new Date().toISOString().split('T')[0]
-    })
-  }
+  // Método removido - ya no necesitamos gestión de estado de pago
   
   /**
-   * Obtener facturas vencidas
+   * Obtener todas las facturas
    */
-  static async obtenerVencidas(): Promise<Factura[]> {
-    return FacturasRepository.obtenerVencidas()
-  }
-  
-  /**
-   * Obtener facturas por orden de compra
-   */
-  static async obtenerPorOrdenCompra(ordenCompraId: string): Promise<Factura[]> {
-    return FacturasRepository.obtenerPorOrdenCompra(ordenCompraId)
-  }
-  
-  /**
-   * Obtener resumen de facturas pendientes
-   */
-  static async obtenerResumenPendientes(): Promise<{
-    total_facturas: number
-    monto_total: number
-    facturas_vencidas: number
-    monto_vencido: number
-  }> {
-    const facturasPendientes = await FacturasRepository.obtenerPorEstado('pendiente')
-    const facturasVencidas = await FacturasRepository.obtenerVencidas()
-    
-    const montoTotal = facturasPendientes.reduce((sum, f) => sum + Number(f.monto_total), 0)
-    const montoVencido = facturasVencidas.reduce((sum, f) => sum + Number(f.monto_total), 0)
-    
-    return {
-      total_facturas: facturasPendientes.length,
-      monto_total: montoTotal,
-      facturas_vencidas: facturasVencidas.length,
-      monto_vencido: montoVencido
-    }
+  static async obtenerTodas(): Promise<Factura[]> {
+    return FacturasRepository.obtenerTodas()
   }
   
   /**
@@ -193,12 +137,7 @@ export class FacturasService {
         }
       }
       
-      if (factura.estado === 'pagada') {
-        return {
-          exito: false,
-          errores: ['No se pueden eliminar facturas pagadas']
-        }
-      }
+      // Ahora se pueden eliminar todas las facturas
       
       await FacturasRepository.eliminar(id)
       
@@ -234,38 +173,26 @@ export class FacturasService {
     
     if (!ordenCompra) {
       errores.push('La orden de compra especificada no existe')
-    } else {
-      // 3. Validar que la orden está en estado apropiado para facturación
-      if (ordenCompra.estado !== 'enviada') {
-        errores.push('Solo se pueden crear facturas para órdenes enviadas')
-      }
     }
     
-    // 4. Validar fechas
-    const fechaFactura = new Date(datos.fecha_factura)
-    const fechaVencimiento = new Date(datos.fecha_vencimiento)
-    
-    if (fechaVencimiento <= fechaFactura) {
-      errores.push('La fecha de vencimiento debe ser posterior a la fecha de factura')
+    // 3. Validar montos
+    if (datos.monto_neto < 0.01) {
+      errores.push('El monto neto debe ser mayor a 0')
     }
     
-    // 5. Validar monto
     if (datos.monto_total < 0.01) {
       errores.push('El monto total debe ser mayor a 0')
+    }
+    
+    // 4. Validar que IVA + monto neto = monto total
+    if (Math.abs((datos.monto_neto + datos.iva) - datos.monto_total) > 0.01) {
+      errores.push('El monto total debe ser igual a la suma del monto neto más el IVA')
     }
     
     return errores
   }
   
-  private static validarTransicionEstado(estadoActual: string, nuevoEstado: string): boolean {
-    const transicionesValidas: Record<string, string[]> = {
-      'pendiente': ['enviada', 'pagada'],
-      'enviada': ['pagada'],
-      'pagada': [] // Estado final
-    }
-    
-    return transicionesValidas[estadoActual]?.includes(nuevoEstado) ?? false
-  }
+  // Método de transición de estado removido - ya no es necesario
   
   private static async generarNumeroFactura(): Promise<string> {
     const año = new Date().getFullYear()

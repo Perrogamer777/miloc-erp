@@ -69,10 +69,10 @@ export default function AdminFacturasTable() {
     }
   }
 
-  const formatearMonto = (monto: number, moneda: string) => {
+  const formatearMonto = (monto: number) => {
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',
-      currency: moneda === 'CLP' ? 'CLP' : moneda,
+      currency: 'CLP',
       minimumFractionDigits: 0,
     }).format(monto)
   }
@@ -144,11 +144,11 @@ export default function AdminFacturasTable() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-black">Número</TableHead>
-                  <TableHead className="text-black">Proveedor</TableHead>
+                  <TableHead className="text-black">Vendedor</TableHead>
                   <TableHead className="text-black">Monto</TableHead>
                   <TableHead className="text-black">Estado</TableHead>
                   <TableHead className="text-black">Fecha Factura</TableHead>
-                  <TableHead className="text-black">Fecha Vencimiento</TableHead>
+                  <TableHead className="text-black">Fecha Pago</TableHead>
                   <TableHead className="text-black">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
@@ -165,15 +165,12 @@ export default function AdminFacturasTable() {
                       
                       <TableCell className="text-black">
                         <div>
-                          <p className="font-medium">{factura.nombre_proveedor}</p>
-                          {factura.email_proveedor && (
-                            <p className="text-sm">{factura.email_proveedor}</p>
-                          )}
+                          <p className="font-medium">{factura.nombre_vendedor}</p>
                         </div>
                       </TableCell>
                       
                       <TableCell className="text-black">
-                        {formatearMonto(Number(factura.monto_total), factura.moneda)}
+                        {formatearMonto(Number(factura.monto_total))}
                       </TableCell>
                       
                       <TableCell>
@@ -187,7 +184,7 @@ export default function AdminFacturasTable() {
                       </TableCell>
                       
                       <TableCell className="text-black">
-                        {formatearFecha(factura.fecha_vencimiento)}
+                        {factura.fecha_pago ? formatearFecha(factura.fecha_pago) : '-'}
                       </TableCell>
                       
                       <TableCell>
@@ -252,15 +249,12 @@ interface EditFacturaModalProps {
 function EditFacturaModal({ factura, onSave, onCancel }: EditFacturaModalProps) {
   const [formData, setFormData] = useState({
     numero_factura: factura.numero_factura,
-    nombre_proveedor: factura.nombre_proveedor,
-    email_proveedor: factura.email_proveedor || '',
+    nombre_vendedor: factura.nombre_vendedor,
     estado: factura.estado,
     monto_total: factura.monto_total.toString(),
-    moneda: factura.moneda,
     fecha_factura: factura.fecha_factura,
-    fecha_vencimiento: factura.fecha_vencimiento,
     fecha_pago: factura.fecha_pago || '',
-    observaciones: factura.observaciones || ''
+    notas: factura.notas || ''
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -268,9 +262,8 @@ function EditFacturaModal({ factura, onSave, onCancel }: EditFacturaModalProps) 
     onSave({
       ...formData,
       monto_total: parseFloat(formData.monto_total),
-      email_proveedor: formData.email_proveedor || null,
       fecha_pago: formData.fecha_pago || null,
-      observaciones: formData.observaciones || null
+      notas: formData.notas || null
     })
   }
 
@@ -295,26 +288,14 @@ function EditFacturaModal({ factura, onSave, onCancel }: EditFacturaModalProps) 
 
           <div>
             <label className="block text-sm font-medium text-black mb-1">
-              Proveedor
+              Vendedor
             </label>
             <input
               type="text"
-              value={formData.nombre_proveedor}
-              onChange={(e) => setFormData({...formData, nombre_proveedor: e.target.value})}
+              value={formData.nombre_vendedor}
+              onChange={(e) => setFormData({...formData, nombre_vendedor: e.target.value})}
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-black"
               required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-black mb-1">
-              Email Proveedor
-            </label>
-            <input
-              type="email"
-              value={formData.email_proveedor}
-              onChange={(e) => setFormData({...formData, email_proveedor: e.target.value})}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-black"
             />
           </div>
 
@@ -328,7 +309,6 @@ function EditFacturaModal({ factura, onSave, onCancel }: EditFacturaModalProps) 
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-black"
             >
               <option value="pendiente">Pendiente</option>
-              <option value="enviada">Enviada</option>
               <option value="pagada">Pagada</option>
             </select>
           </div>
@@ -360,18 +340,6 @@ function EditFacturaModal({ factura, onSave, onCancel }: EditFacturaModalProps) 
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-black mb-1">
-              Fecha Vencimiento
-            </label>
-            <input
-              type="date"
-              value={formData.fecha_vencimiento}
-              onChange={(e) => setFormData({...formData, fecha_vencimiento: e.target.value})}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-black"
-              required
-            />
-          </div>
 
           {formData.estado === 'pagada' && (
             <div>
@@ -389,11 +357,11 @@ function EditFacturaModal({ factura, onSave, onCancel }: EditFacturaModalProps) 
 
           <div>
             <label className="block text-sm font-medium text-black mb-1">
-              Observaciones
+              Notas
             </label>
             <textarea
-              value={formData.observaciones}
-              onChange={(e) => setFormData({...formData, observaciones: e.target.value})}
+              value={formData.notas}
+              onChange={(e) => setFormData({...formData, notas: e.target.value})}
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-black"
               rows={3}
             />
