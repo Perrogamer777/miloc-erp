@@ -5,6 +5,7 @@ import Sidebar from "./components/layout/Sidebar"
 import Dashboard from "./components/Dashboard"
 import OrdenesCompraTable from "./components/tables/OrdenesCompraTable"
 import OrdenCompraForm from "./components/forms/OrdenCompraForm"
+import AdminPanel from "./components/admin/AdminPanel"
 import { Card, CardHeader, CardTitle, CardContent } from "./components/ui/Card"
 import PDFUpload from "./components/upload/PDFUpload"
 export default function Home() {
@@ -76,6 +77,9 @@ export default function Home() {
             </Card>
           </div>
         )
+      
+      case 'admin':
+        return <AdminPanel />
       
       case 'reportes':
         return (
