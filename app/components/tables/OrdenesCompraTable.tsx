@@ -56,7 +56,7 @@ export default function OrdenesCompraTable({ onEdit, onDelete, refreshTrigger }:
         <CardContent className="py-8">
           <div className="flex items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-3 text-gray-600">Cargando órdenes...</span>
+            <span className="ml-3 text-black">Cargando órdenes...</span>
           </div>
         </CardContent>
       </Card>
@@ -83,7 +83,7 @@ export default function OrdenesCompraTable({ onEdit, onDelete, refreshTrigger }:
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Órdenes de Compra</CardTitle>
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-black font-medium">
             {ordenes.length} {ordenes.length === 1 ? 'orden' : 'órdenes'}
           </div>
         </div>
@@ -92,20 +92,20 @@ export default function OrdenesCompraTable({ onEdit, onDelete, refreshTrigger }:
       <CardContent>
         {ordenes.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-gray-500 mb-4">No hay órdenes de compra registradas</p>
-            <p className="text-sm text-gray-400">Crea tu primera orden para comenzar</p>
+            <p className="text-black mb-4">No hay órdenes de compra registradas</p>
+            <p className="text-sm text-black">Crea tu primera orden para comenzar</p>
           </div>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Número</TableHead>
-                <TableHead>Proveedor</TableHead>
-                <TableHead>Monto</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Fecha Orden</TableHead>
-                <TableHead>Entrega Esperada</TableHead>
-                <TableHead>Acciones</TableHead>
+                <TableHead className="text-black">Número</TableHead>
+                <TableHead className="text-black">Proveedor</TableHead>
+                <TableHead className="text-black">Monto</TableHead>
+                <TableHead className="text-black">Estado</TableHead>
+                <TableHead className="text-black">Fecha Orden</TableHead>
+                <TableHead className="text-black">Entrega Esperada</TableHead>
+                <TableHead className="text-black">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             
@@ -115,20 +115,20 @@ export default function OrdenesCompraTable({ onEdit, onDelete, refreshTrigger }:
                 
                 return (
                   <TableRow key={orden.id}>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium text-black">
                       {orden.numero_orden}
                     </TableCell>
                     
-                    <TableCell>
+                    <TableCell className="text-black">
                       <div>
                         <p className="font-medium">{orden.nombre_proveedor}</p>
                         {orden.email_proveedor && (
-                          <p className="text-sm text-gray-600">{orden.email_proveedor}</p>
+                          <p className="text-sm">{orden.email_proveedor}</p>
                         )}
                       </div>
                     </TableCell>
                     
-                    <TableCell>
+                    <TableCell className="text-black">
                       {formatearMonto(Number(orden.monto_total), orden.moneda)}
                     </TableCell>
                     
@@ -138,11 +138,11 @@ export default function OrdenesCompraTable({ onEdit, onDelete, refreshTrigger }:
                       </Badge>
                     </TableCell>
                     
-                    <TableCell>
+                    <TableCell className="text-black">
                       {formatearFecha(orden.fecha_orden)}
                     </TableCell>
                     
-                    <TableCell>
+                    <TableCell className="text-black">
                       {orden.fecha_entrega_esperada 
                         ? formatearFecha(orden.fecha_entrega_esperada)
                         : '-'

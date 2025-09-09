@@ -65,7 +65,7 @@ export default function Sidebar({ activeSection, onSectionChange }: SidebarProps
           </div>
           <div>
             <h1 className="text-xl font-semibold text-gray-900">MILOC ERP</h1>
-            <p className="text-sm text-gray-500">Sistema de Gestión</p>
+            <p className="text-sm text-gray-800">Sistema de Gestión</p>
           </div>
         </div>
         
@@ -79,7 +79,7 @@ export default function Sidebar({ activeSection, onSectionChange }: SidebarProps
           </div>
           <div className="flex-1">
             <p className="text-sm font-medium text-gray-900">Usuario Admin</p>
-            <p className="text-xs text-gray-500">admin@miloc.com</p>
+            <p className="text-xs text-gray-700">admin@miloc.com</p>
           </div>
         </div>
       </div>
@@ -94,10 +94,10 @@ export default function Sidebar({ activeSection, onSectionChange }: SidebarProps
               className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
                 activeSection === item.id
                   ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                  : 'text-gray-700 hover:bg-gray-50'
+                  : 'text-gray-900 hover:bg-gray-50'
               }`}
             >
-              <div className={activeSection === item.id ? 'text-blue-600' : 'text-gray-400'}>
+              <div className={activeSection === item.id ? 'text-blue-600' : 'text-gray-600'}>
                 {item.icon}
               </div>
               <span className="font-medium">{item.label}</span>

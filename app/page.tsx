@@ -27,7 +27,7 @@ export default function Home() {
           <div className="space-y-8">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 mb-2">Órdenes de Compra</h1>
-              <p className="text-gray-600">Gestiona todas las órdenes de compra</p>
+              <p className="text-gray-900">Gestiona todas las órdenes de compra</p>
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -61,7 +61,7 @@ export default function Home() {
           <div className="space-y-8">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 mb-2">Facturas</h1>
-              <p className="text-gray-600">Gestiona todas las facturas</p>
+              <p className="text-gray-900">Gestiona todas las facturas</p>
             </div>
             
             <Card>
@@ -69,7 +69,7 @@ export default function Home() {
                 <CardTitle>Lista de Facturas</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12 text-gray-500">
+                <div className="text-center py-12 text-gray-800">
                   <p>Funcionalidad de facturas próximamente</p>
                 </div>
               </CardContent>
@@ -82,7 +82,7 @@ export default function Home() {
           <div className="space-y-8">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 mb-2">Reportes</h1>
-              <p className="text-gray-600">Análisis y reportes del sistema</p>
+              <p className="text-gray-900">Análisis y reportes del sistema</p>
             </div>
             
             <Card>
@@ -90,7 +90,7 @@ export default function Home() {
                 <CardTitle>Reportes Disponibles</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12 text-gray-500">
+                <div className="text-center py-12 text-gray-800">
                   <p>Reportes próximamente</p>
                 </div>
               </CardContent>
