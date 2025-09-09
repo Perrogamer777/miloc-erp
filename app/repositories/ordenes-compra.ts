@@ -1,5 +1,6 @@
 import { Database } from '../lib/types/database'
 import { crearClienteSupabase } from '../lib/supabase/client'
+import { SupabaseStorageService } from '../lib/supabase/storage'
 
 type OrdenCompra = Database['public']['Tables']['ordenes_compra']['Row']
 type NuevaOrdenCompra = Database['public']['Tables']['ordenes_compra']['Insert']
@@ -122,5 +123,72 @@ export class OrdenesCompraRepository {
     }
     
     return data || []
+  }
+  
+  // ========== MÉTODOS PRIVADOS PARA MANEJO DE ARCHIVOS ==========
+  
+  /**
+   * Verificar si la orden tiene un archivo asociado
+   */
+  private static tieneArchivoAsociado(orden: OrdenCompra): boolean {
+    // Verificar si existe alguno de estos campos que podrían contener la URL del PDF
+    return !!(orden as any).archivo_pdf_url || 
+           !!(orden as any).pdf_url || 
+           !!(orden as any).archivo_url ||
+           // O verificar en las notas si hay referencia al archivo
+           (orden.notas && orden.notas.includes('📄 Archivo adjunto:'))
+  }
+  
+  /**
+   * Extraer la ruta del archivo desde la orden
+   */
+  private static extraerRutaDelArchivo(orden: OrdenCompra): string | null {
+    // Intentar obtener la ruta desde diferentes campos posibles
+    const urlArchivo = (orden as any).archivo_pdf_url || 
+                      (orden as any).pdf_url || 
+                      (orden as any).archivo_url
+    
+    if (urlArchivo) {
+      return this.extraerRutaDeUrl(urlArchivo)
+    }
+    
+    // Si no hay URL directa, intentar extraer de las notas
+    if (orden.notas && orden.notas.includes('📄 Archivo adjunto:')) {
+      // Las notas podrían contener información del archivo
+      // Generar ruta basada en el número de orden
+      return `ordenes_compra/${orden.numero_orden}_*.pdf`
+    }
+    
+    return null
+  }
+  
+  /**
+   * Extraer ruta del archivo desde una URL completa
+   */
+  private static extraerRutaDeUrl(url: string): string | null {
+    try {
+      // Extraer la ruta del archivo desde la URL de Supabase
+      // Formato esperado: https://[project].supabase.co/storage/v1/object/public/documentos/ruta/archivo.pdf
+      const urlObj = new URL(url)
+      const pathname = urlObj.pathname
+      
+      // Buscar 'documentos/' en el path y extraer todo lo que viene después
+      const match = pathname.match(/\/documentos\/(.+)$/)
+      if (match && match[1]) {
+        return match[1] // Retorna solo la ruta relativa dentro del bucket
+      }
+      
+      // Si no coincide con el formato esperado, intentar extraer el último segmento
+      const segments = pathname.split('/')
+      const fileName = segments[segments.length - 1]
+      if (fileName && fileName.endsWith('.pdf')) {
+        return `ordenes_compra/${fileName}`
+      }
+      
+    } catch (error) {
+      console.error('Error al extraer ruta de URL:', error)
+    }
+    
+    return null
   }
 }

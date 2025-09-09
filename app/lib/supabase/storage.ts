@@ -64,6 +64,11 @@ export class SupabaseStorageService {
     ruta: string
   ): Promise<{ data: any; error: any }> {
     try {
+      // Si la ruta contiene '*', buscar archivos que coincidan
+      if (ruta.includes('*')) {
+        return await this.eliminarArchivosConPatron(bucket, ruta)
+      }
+      
       const { data, error } = await this.supabase.storage
         .from(bucket)
         .remove([ruta])
@@ -71,6 +76,47 @@ export class SupabaseStorageService {
       return { data, error }
     } catch (error) {
       console.error('Error eliminando archivo:', error)
+      return { data: null, error }
+    }
+  }
+  
+  // Eliminar archivos que coincidan con un patrón (para wildcards)
+  private static async eliminarArchivosConPatron(
+    bucket: string,
+    patronRuta: string
+  ): Promise<{ data: any; error: any }> {
+    try {
+      // Extraer el directorio base del patrón
+      const partesRuta = patronRuta.split('/')
+      const directorio = partesRuta.slice(0, -1).join('/')
+      const patronArchivo = partesRuta[partesRuta.length - 1]
+      
+      // Listar archivos en el directorio
+      const { data: archivos, error: errorListar } = await this.listarArchivos(bucket, directorio)
+      
+      if (errorListar || !archivos) {
+        return { data: null, error: errorListar }
+      }
+      
+      // Filtrar archivos que coincidan con el patrón
+      const regex = new RegExp(patronArchivo.replace('*', '.*'))
+      const archivosCoincidentes = archivos
+        .filter(archivo => regex.test(archivo.name))
+        .map(archivo => `${directorio}/${archivo.name}`)
+      
+      if (archivosCoincidentes.length === 0) {
+        return { data: [], error: null }
+      }
+      
+      // Eliminar todos los archivos coincidentes
+      const { data, error } = await this.supabase.storage
+        .from(bucket)
+        .remove(archivosCoincidentes)
+      
+      return { data, error }
+      
+    } catch (error) {
+      console.error('Error eliminando archivos con patrón:', error)
       return { data: null, error }
     }
   }
