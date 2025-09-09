@@ -23,14 +23,29 @@ export default function Dashboard() {
   
   const loadStats = async () => {
     try {
+      // Obtener datos reales de facturas
+      const resumenFacturas = await FacturasService.obtenerResumenPendientes()
+      
+      // Obtener datos reales de órdenes de compra
+      const ordenesRecibidas = await OrdenesCompraRepository.obtenerTodas()
+      const ordenesPendientes = await OrdenesCompraRepository.obtenerPorEstado('pendiente')
+      const ordenesEnviadas = await OrdenesCompraRepository.obtenerPorEstado('enviada')
+      
       setStats({
-        facturasPendientes: 12,
-        montoPendientePago: 45850000,
-        cotizacionesEnviadas: 8,
-        ordenesCompraRecibidas: 15
+        facturasPendientes: resumenFacturas.total_facturas,
+        montoPendientePago: resumenFacturas.monto_total,
+        cotizacionesEnviadas: ordenesEnviadas.length,
+        ordenesCompraRecibidas: ordenesRecibidas.length
       })
     } catch (error) {
       console.error('Error loading stats:', error)
+      // En caso de error, mantener valores en 0
+      setStats({
+        facturasPendientes: 0,
+        montoPendientePago: 0,
+        cotizacionesEnviadas: 0,
+        ordenesCompraRecibidas: 0
+      })
     } finally {
       setLoading(false)
     }
